@@ -28,11 +28,16 @@ if not os.path.exists('videos'):
 
 @dp.message_handler(commands=['bibometr'])
 async def start_command(message: types.Message):
-    biba = "C="
-    for i in range(random.randint(0,9)):
+    size1 = random.randint(-20,20)
+    size2 = random.randint(0, 9)
+    biba = "8"
+    for i in range(abs(int(size1/2))):
         biba = biba + "="
-    biba += "З"
-    await message.reply(biba)
+    biba += "D"
+    if size1 < 1:
+        await message.reply(str(abs(size1)) + " см в жопе" + "\n" + biba)
+    else:
+        await message.reply("Твой стручок: " + str(size1) + " см :(" + "\n" + biba)
 
 @dp.message_handler(commands=['all'])
 async def ping(m):
@@ -82,6 +87,17 @@ async def text(message: types.Message):
                 os.remove(path)
             except:
                 await bot.send_message(chat_id=message.chat.id, text='Ошибка при скачивании, неверная ссылка, видео было удалено или я его не нашел.')
+
+@dp.message_handler(commands=['set'])
+async def set_default_commands(dp):
+    await dp.bot.set_my_commands([
+        types.BotCommand("all", "Пинганем всех!"),
+        types.BotCommand("bibometr", "Померяем твой стручок"),
+        types.BotCommand("tiktokLink", "Выгрузим тикток в данный чат"),
+    ])
+
+
+
 if __name__ == "__main__":
     # Запускаем бота
     executor.start_polling(dp, skip_updates=True)
