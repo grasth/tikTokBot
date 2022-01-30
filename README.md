@@ -1,2 +1,2 @@
 # tikTokBot
-hueta v11
+hueta v12
