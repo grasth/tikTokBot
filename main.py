@@ -12,6 +12,11 @@ import urllib.request
 from tiktok_downloader import snaptik
 import sys
 
+import cx_Oracle
+
+cx_Oracle.init_oracle_client(lib_dir=r".\dbConnect")
+# connection = cx_Oracle.connect(user="admin", password="Hu),[*3S*!hg#M2&", dsn="ghoulhelperdb_high")
+
 bot = Bot(token=sys.argv[1])
 dp = Dispatcher(bot, storage=MemoryStorage())
 
@@ -40,29 +45,56 @@ async def start_command(message: types.Message):
         await message.reply("Твой стручок: " + str(size1) + " см :(" + "\n" + biba)
 
 @dp.message_handler(commands=['all'])
-async def ping(m):
-    if not os.path.exists(str(m.chat.id).strip().replace('-', '') + '.txt'):
-        f = open(str(m.chat.id).strip().replace('-', '') + '.txt', 'w')
-        f.writelines(m.from_user.username)
-        f.close()
-        await m.reply('Добавлены в список')
-    else:
-        f = open(str(m.chat.id).strip().replace('-', '') + '.txt', 'r')
-        if m.from_user.username in f.read():
-            msg = ''
-            f.seek(0)
-            for line in f.read().splitlines():
-                msg = msg + ' @' + line
-            await m.reply(msg)
-        else:
-            f.close()
-            f = open(str(m.chat.id).strip().replace('-', '') + '.txt', 'a+')
-            f.writelines('\n' + m.from_user.username)
-            f.close()
-            m.reply('Добавлены в список')
+async def ping(message: types.Message):
+    sql = ('insert into commandall(GROUPID, USERNAME)'
+           'values(:GROUPID,:USERNAME)')
+
+    try:
+        # establish a new connection
+        with cx_Oracle.connect("admin",
+                               "Hu),[*3S*!hg#M2&",
+                               "ghoulhelperdb_high",
+                               encoding='UTF-8') as connection:
+            # create a cursor
+            with connection.cursor() as cursor:
+                # getTable = cursor.execute(f'select * from COMMANDALL where GROUPID={message.chat.id}')
+                if cursor.execute(f'SELECT EXISTS(SELECT id FROM COMMANDALL WHERE USERNAME = {message.from_user.username})'):
+                    # msg = ""
+                    # for username in getTable:
+                    #     msg += f'@{username}'
+                    # await bot.send_message(message.chat.id, msg)
+                    print("exists")
+                else:
+                    print("not exists")
+                    # cursor.execute(sql, [message.chat.id, message.from_user.username])
+                    # await bot.send_message(message.chat.id, "Вы добавлены в таблицу")
+                # execute the insert statement
+                # commit work
+                connection.commit()
+
+    except cx_Oracle.Error as error:
+        print('Error occurred:')
+        print(error)
 
 
 
+
+
+
+
+
+    # cursor = connection.cursor()
+    # getTable = cursor.execute(f'select * from COMMANDALL where GROUPID={message.chat.id}')
+    # for i in getTable:
+    #     print(i)
+    # if message.from_user.username in getTable:
+    #     msg = ""
+    #     for username in getTable:
+    #         msg += f'@{username}'
+    #     await bot.send_message(message.chat.id, msg)
+    # else:
+    #     cursor.executemany('insert into COMMANDALL(GROUPID, USERNAME) values (:1, :2)', [{message.chat.id}, {message.from_user.username}])
+    #     await bot.send_message(message.chat.id, "Вы добавлены в таблицу")
 
 
 @dp.message_handler(content_types=['text'])
