@@ -1,6 +1,7 @@
 import os, re, configparser, requests
 import random
 import urllib
+
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher, FSMContext
 from aiogram.utils import executor
@@ -35,9 +36,9 @@ async def start_command(message: types.Message):
         biba = biba + "="
     biba += "D"
     if size1 < 1:
-        await message.reply(str(abs(size1)) + " см в жопе" + "\n" + biba)
+        await message.reply(str(abs(size1)) + " см в жопе 😳" + "\n" + biba)
     else:
-        await message.reply("Твой стручок: " + str(size1) + " см :(" + "\n" + biba)
+        await message.reply("Твой стручок: " + str(size1) + " см 😎" + "\n" + biba)
 
 @dp.message_handler(commands=['all'])
 async def ping(m):
