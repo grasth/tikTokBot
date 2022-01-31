@@ -57,19 +57,19 @@ async def ping(message: types.Message):
                                encoding='UTF-8') as connection:
             # create a cursor
             with connection.cursor() as cursor:
-                # getTable = cursor.execute(f'select * from COMMANDALL where GROUPID={message.chat.id}')
-                if cursor.execute(f'SELECT EXISTS(SELECT id FROM COMMANDALL WHERE USERNAME = {message.from_user.username})'):
-                    # msg = ""
-                    # for username in getTable:
-                    #     msg += f'@{username}'
-                    # await bot.send_message(message.chat.id, msg)
-                    print("exists")
+                select_stmt = f'SELECT * FROM COMMANDALL WHERE GROUPID = {message.chat.id}'
+                getTable = []
+                for item in cursor.execute(select_stmt):
+                    getTable.append(item[1])
+
+                if message.from_user.username in getTable:
+                    msg = ""
+                    for username in getTable:
+                         msg += f'@{username} '
+                    await bot.send_message(message.chat.id, msg)
                 else:
-                    print("not exists")
-                    # cursor.execute(sql, [message.chat.id, message.from_user.username])
-                    # await bot.send_message(message.chat.id, "Вы добавлены в таблицу")
-                # execute the insert statement
-                # commit work
+                    cursor.execute(sql, [message.chat.id, message.from_user.username])
+                    await bot.send_message(message.chat.id, "Вы добавлены в таблицу")
                 connection.commit()
 
     except cx_Oracle.Error as error:
