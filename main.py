@@ -86,8 +86,10 @@ async def text(message: types.Message):
                         reply_to_message_id=message.message_id
                         )
                 os.remove(path)
-            except:
-                await bot.send_message(chat_id=message.chat.id, text='Ошибка при скачивании, неверная ссылка, видео было удалено или я его не нашел.')
+            except Exception as e:
+                await bot.send_message(chat_id=message.chat.id, text=str(type(e)))
+                await bot.send_message(chat_id=message.chat.id, text=str(e.args))   
+                #await bot.send_message(chat_id=message.chat.id, text='Ошибка при скачивании, неверная ссылка, видео было удалено или я его не нашел.')
 
 @dp.message_handler(commands=['set'])
 async def set_default_commands(dp):
