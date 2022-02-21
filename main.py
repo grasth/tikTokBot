@@ -1,6 +1,5 @@
 import os, re, configparser, requests
 import random
-import urllib
 
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher, FSMContext
@@ -12,6 +11,9 @@ from aiogram.types import ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButt
 import urllib.request
 from tiktok_downloader import snaptik
 import sys
+import urllib
+import requests  # для URL запроса
+from bs4 import BeautifulSoup  # для работы с HTML
 
 bot = Bot(token=sys.argv[1])
 dp = Dispatcher(bot, storage=MemoryStorage())
@@ -90,6 +92,66 @@ async def text(message: types.Message):
                 await bot.send_message(chat_id=message.chat.id, text=str(type(e)))
                 await bot.send_message(chat_id=message.chat.id, text=str(e.args))   
                 #await bot.send_message(chat_id=message.chat.id, text='Ошибка при скачивании, неверная ссылка, видео было удалено или я его не нашел.')
+    elif message.text[0] == '$':
+        try:
+            ticker = (message.text).replace('$', '')
+            urlOfTicker = "https://invest.yandex.ru/catalog/stock/" + ticker
+
+            # заголовки для URL запроса.(добавляется к ссылке при URL запросе)
+            headers = {
+                'user agent': "Mozilla/5.0 (Windows NT 10.0; WOW64) "
+                              "AppleWebKit/537.36 (KHTML, like Gecko) "
+                              "Chrome/91.0.4472.135 Safari/537.36"}
+
+            # запрашиваем страницу по ссылке и помещаем в переменную html
+            html = requests.get(urlOfTicker, headers)
+
+            # парсим данные в переменную soup
+            soup = BeautifulSoup(html.content, 'html.parser')
+
+            # находим интересующий нас тэг с текущим курсом
+            # (В браузере используем просмотр кода элемента для того чтобы найти это значение)
+
+            isLot = soup.find('span', {'class': 'bxGayARGKhq9SK26MnEt'}).get_text()
+            PriceNow = soup.find('span', {'class': 'bolbtRDz491tDq6jfmHd'}).get_text()
+            result = ''
+            Currency = soup.find('span', {'class': 's_OEpI6WApP0emKfb__p'}).get_text()
+            if (isLot == 'Узнать больше о фондах'):
+                PriceNow = soup.find('span', {'class': 'bolbtRDz491tDq6jfmHd'}).get_text()
+                temp = ("".join(PriceNow.split()))
+                temp = temp.replace(',', '.')
+                result = (temp + Currency)
+            else:
+                temp = ("".join(PriceNow.split()))
+                temp = temp.replace(',', '.')
+                result = (str(round(float(temp) / 10, 1)) + Currency)
+
+            resultMessage = ''
+            PercentIntraday = soup.find('div', {'class': 'rzv7e6OPChq71rCQBr9H'}).get_text()
+            pattern = re.compile("([\d,]+)  %")
+            match = re.findall(pattern, PercentIntraday)
+            temp = ''.join(match)
+            temp = temp.replace(',', '.')
+            resultMessage += "Цена акций " + ticker.upper() + ": " + result + '\n'
+            resultMessage += "Движение цены за сегодня: " + PercentIntraday[0] + temp + " %" + '\n'
+
+            Prognoz = soup.find('dd', {'class': '_6TCcuJ2ARzl_p6vbOa2'}).get_text()
+            resultMessage += "Консенсус прогноз: " + Prognoz + '\n'
+
+            PrognozPercent = soup.findAll('dd', {'class': '_6TCcuJ2ARzl_p6vbOa2'})
+            temp = str(PrognozPercent)
+            pattern = re.compile(
+                "<dd class=\"_6TCcuJ2ARzl_p6vbOa2\">([\d,  ₽|$]+)<div class=\"rzv7e6OPChq71rCQBr9H SUCnYTT5LFAlaqfSzDh5 mq6wSvRObYLvnnJqmh5Q\">")
+            match = re.findall(pattern, temp)
+            resultMessage += "Прогнозируемая цена " + str(match[0]).replace(',', '.') + '\n'
+
+            PrognozPercent = soup.find('div', {
+                'class': 'rzv7e6OPChq71rCQBr9H SUCnYTT5LFAlaqfSzDh5 mq6wSvRObYLvnnJqmh5Q'}).get_text()
+            temp = PrognozPercent.replace('  ', '').replace(',', '.')
+            resultMessage += "Прогнозируемый процент роста: " + temp + '\n'
+            await bot.send_message(chat_id=message.chat.id, text=resultMessage)
+        except:
+            await bot.send_message(chat_id=message.chat.id, text='Не верные данные.')
 
 @dp.message_handler(commands=['set'])
 async def set_default_commands(dp):
