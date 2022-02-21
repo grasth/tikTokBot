@@ -132,18 +132,18 @@ async def text(message: types.Message):
             match = re.findall(pattern, PercentIntraday)
             temp = ''.join(match)
             temp = temp.replace(',', '.')
-            resultMessage += "Цена акций " + ticker.upper() + ": " + result + '\n'
-            resultMessage += "Движение цены за сегодня: " + PercentIntraday[0] + temp + " %" + '\n'
+            resultMessage += "Цена акций " + ticker.upper() + ": " + result.replace('  ', '') + '\n'
+            resultMessage += "Движение цены за сегодня: " + PercentIntraday[0] + temp + "%" + '\n'
 
             Prognoz = soup.find('dd', {'class': '_6TCcuJ2ARzl_p6vbOa2'}).get_text()
-            resultMessage += "Консенсус прогноз: " + Prognoz + '\n'
+            resultMessage += "Консенсус прогноз: " + Prognoz.replace('  ', '') + '\n'
 
             PrognozPercent = soup.findAll('dd', {'class': '_6TCcuJ2ARzl_p6vbOa2'})
             temp = str(PrognozPercent)
             pattern = re.compile(
                 "<dd class=\"_6TCcuJ2ARzl_p6vbOa2\">([\d,  ₽|$]+)<div class=\"rzv7e6OPChq71rCQBr9H SUCnYTT5LFAlaqfSzDh5 mq6wSvRObYLvnnJqmh5Q\">")
             match = re.findall(pattern, temp)
-            resultMessage += "Прогнозируемая цена " + str(match[0]).replace(',', '.') + '\n'
+            resultMessage += "Прогнозируемая цена: " + str(match[0]).replace(',', '.').replace('  ', '') + '\n'
 
             PrognozPercent = soup.find('div', {
                 'class': 'rzv7e6OPChq71rCQBr9H SUCnYTT5LFAlaqfSzDh5 mq6wSvRObYLvnnJqmh5Q'}).get_text()
