@@ -93,111 +93,65 @@ async def text(message: types.Message):
                 await bot.send_message(chat_id=message.chat.id, text=str(e.args))   
                 #await bot.send_message(chat_id=message.chat.id, text='Ошибка при скачивании, неверная ссылка, видео было удалено или я его не нашел.')
     elif message.text[0] == '$':
-        ticker = (message.text).replace('$', '').upper()
-if ticker=='USD' or ticker =='EUR':
-    urlOfTicker = "https://invest.yandex.ru/catalog/currency/" + ticker
+        try:
+            ticker = (message.text).replace('$', '')
+            urlOfTicker = "https://invest.yandex.ru/catalog/stock/" + ticker
 
-    html = requests.get(urlOfTicker, headers)
+            # заголовки для URL запроса.(добавляется к ссылке при URL запросе)
+            headers = {
+                'user agent': "Mozilla/5.0 (Windows NT 10.0; WOW64) "
+                              "AppleWebKit/537.36 (KHTML, like Gecko) "
+                              "Chrome/91.0.4472.135 Safari/537.36"}
 
-    soup = BeautifulSoup(html.content, 'html.parser')
-    csrf_token_pattern = re.compile('window.__CSRF_TOKEN__ = \"([\w\d:]+)\";')
-    reqot_token_pattern = re.compile(',reqid:\'([\d\w]+)\',')
+            # запрашиваем страницу по ссылке и помещаем в переменную html
+            html = requests.get(urlOfTicker, headers)
 
-    csrf = re.findall(csrf_token_pattern, soup.decode())
-    reqid = re.findall(reqot_token_pattern, soup.decode())
+            # парсим данные в переменную soup
+            soup = BeautifulSoup(html.content, 'html.parser')
 
-    url = urlOfTicker
-    payload = {"operationName": "StockChartSeries",
-               "variables": {"slug": "usd", "candleSize": "ONE_DAY", "isoTs": "2022-02-21T20:18:37.149Z", "amount": 2},
-               "query": "query StockChartSeries($slug: String!, $candleSize: CandleSize!, $isoTs: IsoDateTime!, $amount: Int!) {\n  candles2 {\n    series(slug: $slug, candleSize: $candleSize, isoTs: $isoTs, amount: $amount) {\n      results {\n        ts\n        open\n        high\n        low\n        close\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n"}
+            # находим интересующий нас тэг с текущим курсом
+            # (В браузере используем просмотр кода элемента для того чтобы найти это значение)
 
-    headers = {
-        "Host": "invest.yandex.ru",
-        "Connection": "keep-alive",
-        "Content-Length": "509",
-        "Origin": "https://invest.yandex.ru",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36",
-        "Content-Type": "application/json",
-        "Accept": "*/*",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "ru,en-US;q=0.9,en;q=0.8",
-        "x-csrf-token": str(csrf),
-        "x-ssr-id": str(reqid),
-    }
-    r = requests.post(url, data=json.dumps(payload), headers=headers)
-    temp = r.content.decode()
+            isLot = soup.find('span', {'class': 'bxGayARGKhq9SK26MnEt'}).get_text()
+            PriceNow = soup.find('span', {'class': 'bolbtRDz491tDq6jfmHd'}).get_text()
+            result = ''
+            Currency = soup.find('span', {'class': 's_OEpI6WApP0emKfb__p'}).get_text()
+            if (isLot == 'Узнать больше о фондах'):
+                PriceNow = soup.find('span', {'class': 'bolbtRDz491tDq6jfmHd'}).get_text()
+                temp = ("".join(PriceNow.split()))
+                temp = temp.replace(',', '.')
+                result = (temp + Currency)
+            else:
+                temp = ("".join(PriceNow.split()))
+                temp = temp.replace(',', '.')
+                result = (str(round(float(temp) / 10, 1)) + Currency)
 
-    plusOrMinus = re.compile("<div class=\"rzv7e6OPChq71rCQBr9H SUCnYTT5LFAlaqfSzDh5\"><span>([+|-]+)  ")
-    plOrMin = re.findall(plusOrMinus, temp)
+            resultMessage = ''
+            PercentIntraday = soup.find('div', {'class': 'rzv7e6OPChq71rCQBr9H'}).get_text()
+            pattern = re.compile("([\d,]+)  %")
+            match = re.findall(pattern, PercentIntraday)
+            temp = ''.join(match)
+            temp = temp.replace(',', '.')
+            resultMessage += "Цена акций " + ticker.upper() + ": " + result.replace('  ', '') + '\n'
+            resultMessage += "Движение цены за сегодня: " + PercentIntraday[0] + temp + "%" + '\n'
 
-    pattern2 = re.compile("₽<\/span><span>([\d,]+)  %<\/span><\/div>")
-    match = re.findall(pattern2, temp)
-    result = (str(match))
+            Prognoz = soup.find('dd', {'class': '_6TCcuJ2ARzl_p6vbOa2'}).get_text()
+            resultMessage += "Консенсус прогноз: " + Prognoz.replace('  ', '') + '\n'
 
-    symbol = '₽'
-    pattern = re.compile("bolbtRDz491tDq6jfmHd\">([\d,]+)<\/span>")
-    match = re.findall(pattern, temp)
+            PrognozPercent = soup.findAll('dd', {'class': '_6TCcuJ2ARzl_p6vbOa2'})
+            temp = str(PrognozPercent)
+            pattern = re.compile(
+                "<dd class=\"_6TCcuJ2ARzl_p6vbOa2\">([\d,  ₽|$]+)<div class=\"rzv7e6OPChq71rCQBr9H SUCnYTT5LFAlaqfSzDh5 mq6wSvRObYLvnnJqmh5Q\">")
+            match = re.findall(pattern, temp)
+            resultMessage += "Прогнозируемая цена: " + str(match[0]).replace(',', '.').replace('  ', '') + '\n'
 
-    print("Цена валюты " + ticker.upper() + ': ' + "%.2f" % float(str(match[0]).replace(',', '.')) + symbol)
-    print("Движение цены за день: " + str(plOrMin[0]) + str(result).replace("['", "").replace("']", '') + "%")
-else:
-    urlOfTicker = "https://invest.yandex.ru/catalog/stock/" + ticker
-
-    # заголовки для URL запроса.(добавляется к ссылке при URL запросе)
-    headers = {
-        'user agent': "Mozilla/5.0 (Windows NT 10.0; WOW64) "
-                      "AppleWebKit/537.36 (KHTML, like Gecko) "
-                      "Chrome/91.0.4472.135 Safari/537.36"}
-
-    # запрашиваем страницу по ссылке и помещаем в переменную html
-    html = requests.get(urlOfTicker, headers)
-
-    # парсим данные в переменную soup
-    soup = BeautifulSoup(html.content, 'html.parser')
-
-    # находим интересующий нас тэг с текущим курсом
-    # (В браузере используем просмотр кода элемента для того чтобы найти это значение)
-
-    isLot = soup.find('span', {'class': 'bxGayARGKhq9SK26MnEt'}).get_text()
-    PriceNow = soup.find('span', {'class': 'bolbtRDz491tDq6jfmHd'}).get_text()
-    result = ''
-    Currency = soup.find('span', {'class': 's_OEpI6WApP0emKfb__p'}).get_text()
-    if (isLot == 'Узнать больше о фондах'):
-        PriceNow = soup.find('span', {'class': 'bolbtRDz491tDq6jfmHd'}).get_text()
-        temp = ("".join(PriceNow.split()))
-        temp = temp.replace(',', '.')
-        result = (temp + Currency)
-    else:
-        temp = ("".join(PriceNow.split()))
-        temp = temp.replace(',', '.')
-        result = (str(round(float(temp) / 10, 1)) + Currency)
-
-    resultMessage = ''
-    PercentIntraday = soup.find('div', {'class': 'rzv7e6OPChq71rCQBr9H'}).get_text()
-    pattern = re.compile("([\d,]+)  %")
-    match = re.findall(pattern, PercentIntraday)
-    temp = ''.join(match)
-    temp = temp.replace(',', '.')
-    resultMessage += "Цена акций " + ticker.upper() + ": " + result.replace('  ', '') + '\n'
-    resultMessage += "Движение цены за сегодня: " + PercentIntraday[0] + temp + "%" + '\n'
-
-    Prognoz = soup.find('dd', {'class': '_6TCcuJ2ARzl_p6vbOa2'}).get_text()
-    resultMessage += "Консенсус прогноз: " + Prognoz.replace('  ', '') + '\n'
-
-    PrognozPercent = soup.findAll('dd', {'class': '_6TCcuJ2ARzl_p6vbOa2'})
-    temp = str(PrognozPercent)
-    pattern = re.compile(
-        "<dd class=\"_6TCcuJ2ARzl_p6vbOa2\">([\d,  ₽|$]+)<div class=\"rzv7e6OPChq71rCQBr9H SUCnYTT5LFAlaqfSzDh5 mq6wSvRObYLvnnJqmh5Q\">")
-    match = re.findall(pattern, temp)
-    resultMessage += "Прогнозируемая цена: " + str(match[0]).replace(',', '.').replace('  ', '') + '\n'
-
-    PrognozPercent = soup.find('div', {
-        'class': 'rzv7e6OPChq71rCQBr9H SUCnYTT5LFAlaqfSzDh5 mq6wSvRObYLvnnJqmh5Q'}).get_text()
-    temp = PrognozPercent.replace('  ', '').replace(',', '.')
-    resultMessage += "Прогнозируемый процент роста: " + temp + '\n'
+            PrognozPercent = soup.find('div', {
+                'class': 'rzv7e6OPChq71rCQBr9H SUCnYTT5LFAlaqfSzDh5 mq6wSvRObYLvnnJqmh5Q'}).get_text()
+            temp = PrognozPercent.replace('  ', '').replace(',', '.')
+            resultMessage += "Прогнозируемый процент роста: " + temp + '\n'
             await bot.send_message(chat_id=message.chat.id, text=resultMessage)
         except:
-            await bot.send_message(chat_id=message.chat.id, text='Неверные данные.')
+            await bot.send_message(chat_id=message.chat.id, text='Не верные данные.')
 
 @dp.message_handler(commands=['set'])
 async def set_default_commands(dp):
