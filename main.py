@@ -12,8 +12,8 @@ import urllib.request
 from tiktok_downloader import snaptik
 import sys
 import urllib
-import requests  # для URL запроса
-from bs4 import BeautifulSoup  # для работы с HTML
+import requests
+from bs4 import BeautifulSoup
 
 bot = Bot(token=sys.argv[1])
 dp = Dispatcher(bot, storage=MemoryStorage())
@@ -102,6 +102,7 @@ async def text(message: types.Message):
             resultMessage = ''
             ticker = (message.text).replace('$', '')
             print(ticker)
+            ticker = ticker.upper()
             curren = ['EUR', 'USD']
             print(ticker in curren)
             if ticker in curren:
@@ -149,7 +150,7 @@ async def text(message: types.Message):
                 resultMessage += "Цена валюты: " + ticker.upper() + ': ' + "%.2f" % float(str(match[0])
                                                                                          .replace(',', '.')) + symbol \
                                  + '\n'
-                resultMessage += "Движение цены за день: " + str(plOrMin[0][0][0]) + ' ' + str(plOrMin[0][1]).replace('  ', '') + '\n'
+                resultMessage += "Движение цены за день: " + str(plOrMin[0][0][0]) + str(plOrMin[0][1]).replace('  ', '') + '\n'
             else:
                 urlOfTicker = "https://invest.yandex.ru/catalog/stock/" + ticker
 
