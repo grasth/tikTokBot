@@ -1,2 +1,1 @@
-# tikTokBot
-hueta v13
+# Ghoul Helper Bot
