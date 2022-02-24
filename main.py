@@ -111,8 +111,11 @@ async def text(message: types.Message):
                 soup = BeautifulSoup(html.content, 'html.parser').decode()  # Получаем html страницу
                 pricePattern = re.compile("<span class=\"text-2xl\" data-test=\"instrument-price-last\">([\w\d.,]+)</span>")
                 price = re.findall(pricePattern, soup)
-                resultMessage += "Цена за штуку: " + str(price[0]).replace("['", "").replace(",", ".").replace("']", "") + " USD"
+                resultMessage += "Цена за штуку: " + str(price[0]).replace("['", "").replace(",", ".").replace("']", "") + " USD\n"
 
+                # if positiveProfitPattern == true:
+                #     resultMessage += "Движение цены за день: " + "+" + positiveProfitPattern
+                # else: resultMessage += "Движение цены за день: " + "-" + negativeProfitPattern
             elif ticker == "USD":
                 fullUrl = "https://bcs-express.ru/kotirovki-i-grafiki/usd000utstom"  # Ссылка на запрос
                 html = requests.get(fullUrl, headers)  # Отправляем запрос
