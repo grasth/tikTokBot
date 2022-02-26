@@ -1,5 +1,6 @@
 import os, re, configparser, requests
 import random
+from signal import signal, SIGPIPE, SIG_DFL
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher, FSMContext
 from aiogram.utils import executor
@@ -14,6 +15,7 @@ import urllib
 import requests
 from bs4 import BeautifulSoup
 
+signal(SIGPIPE,SIG_DFL)
 bot = Bot(token=sys.argv[1])
 dp = Dispatcher(bot, storage=MemoryStorage())
 
