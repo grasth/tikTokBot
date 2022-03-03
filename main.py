@@ -166,28 +166,28 @@ async def text(message: types.Message):
             await bot.send_message(chat_id=message.chat.id, text=resultMessage)
         except Exception as e:
             await bot.send_message(chat_id=message.chat.id, text='Неверные данные, попробуйте еще раз')
-    elif message.text == '/weather':
-        try:
-            resultMessage = ""
-            headers = {
-                'user agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
-                              "Chrome/98.0.4758.102 Safari/537.36"}  # Headers для запроса
-            url = "https://weather.com/ru-RU/weather/today/l/f2312a9747951a5ddc2e2678f4d7519282e4448dc9bea0157e8f805abb4e4043"
-            html = requests.get(url, headers)  # Отправляем запрос
-            soup = BeautifulSoup(html.content, 'html.parser')  # Получаем html страницу
-            ParsedWeather = soup.findAll("span", {"class": "CurrentConditions--tempValue--3a50n"})
-            resultMessage += "Ижевск\n" + str(ParsedWeather[0]).replace(
-                "<span class=\"CurrentConditions--tempValue--3a50n\" data-testid=\"TemperatureValue\">", "").replace(
-                "</span>", "") + ", "
-            ParsedCondition = soup.findAll("div", {"class": "CurrentConditions--phraseValue--2Z18W"})
-            resultMessage += str(ParsedCondition[0]).replace(
-                "<div class=\"CurrentConditions--phraseValue--2Z18W\" data-testid=\"wxPhrase\">", "").replace("</div>",
-                                                                                                              "")
-            await bot.send_message(chat_id=message.chat.id, text=resultMessage)
-        except Exception as e:
-            await bot.send_message(chat_id=message.chat.id, text='Неверные данные, попробуйте еще раз')
 
-
+@dp.message_handler(commands=['weather'])
+async def ping(m):
+    try:
+        resultMessage = ""
+        headers = {
+            'user agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                          "Chrome/98.0.4758.102 Safari/537.36"}  # Headers для запроса
+        url = "https://weather.com/ru-RU/weather/today/l/f2312a9747951a5ddc2e2678f4d7519282e4448dc9bea0157e8f805abb4e4043"
+        html = requests.get(url, headers)  # Отправляем запрос
+        soup = BeautifulSoup(html.content, 'html.parser')  # Получаем html страницу
+        ParsedWeather = soup.findAll("span", {"class": "CurrentConditions--tempValue--3a50n"})
+        resultMessage += "Ижевск\n" + str(ParsedWeather[0]).replace(
+            "<span class=\"CurrentConditions--tempValue--3a50n\" data-testid=\"TemperatureValue\">", "").replace(
+            "</span>", "") + ", "
+        ParsedCondition = soup.findAll("div", {"class": "CurrentConditions--phraseValue--2Z18W"})
+        resultMessage += str(ParsedCondition[0]).replace(
+            "<div class=\"CurrentConditions--phraseValue--2Z18W\" data-testid=\"wxPhrase\">", "").replace("</div>",
+                                                                                                          "")
+        await bot.send_message(chat_id=m.chat.id, text=resultMessage)
+    except Exception as e:
+        await bot.send_message(chat_id=m.chat.id, text='Неверные данные, попробуйте еще раз')
 
 
 @dp.message_handler(commands=['set'])
