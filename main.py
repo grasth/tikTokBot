@@ -194,7 +194,8 @@ async def text(message: types.Message):
 async def set_default_commands(dp):
     await dp.bot.set_my_commands([
         types.BotCommand("all", "Пингануть всех"),
-        types.BotCommand("bibometr", "Узнать размер агрегата")
+        types.BotCommand("bibometr", "Узнать размер агрегата"),
+        types.BotCommand("weather", "Узнать погоду")
     ])
 
 
