@@ -188,12 +188,6 @@ async def text(message: types.Message):
         except Exception as e:
             await bot.send_message(chat_id=message.chat.id, text='Неверные данные, попробуйте еще раз')
 
-
-
-
-
-
-
 @dp.message_handler(commands=['set'])
 async def set_default_commands(dp):
     await dp.bot.set_my_commands([
