@@ -1,5 +1,13 @@
 import os, re, configparser, requests
 import random
+import re
+import logging
+import asyncio
+from datetime import datetime
+import time
+import threading
+import requests
+from bs4 import BeautifulSoup
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher, FSMContext
 from aiogram.utils import executor
@@ -31,6 +39,55 @@ def download_video(video_url, name):
 if not os.path.exists('videos'):
     os.makedirs('videos')
 
+
+async def checkPosts(wait_for):
+    while True:
+        await asyncio.sleep(wait_for)
+        url = "https://vk.com/club210849292"
+        # print("Парсинг идет с " + url)
+        html = requests.get(url)
+
+        soup = BeautifulSoup(html.content, 'html.parser')
+
+        r = requests.get(url)
+        temp = r.content.decode()
+
+        postIdPattern = re.compile("data-post-id=\"([\d_-]+)\" ")
+        postId = re.findall(postIdPattern, temp)
+
+        with open("temp.txt", "w") as file:
+            file.write(postId[0])  # Записываем в файл id последнего поста
+
+        with open("temp.txt", "r") as file:
+            postIdFromFile = file.read()
+            # print("id последнего поста: " + postIdFromFile)
+
+        while postId[0] == postIdFromFile:
+            html = requests.get(url)
+            soup = BeautifulSoup(html.content, 'html.parser')
+            r = requests.get(url)
+            temp = r.content.decode()
+
+            postIdPattern = re.compile("data-post-id=\"([\d_-]+)\" ")
+            postId = re.findall(postIdPattern, temp)
+
+            with open("temp.txt", "r") as file:
+                postIdFromFile = file.read()
+                # print("пост из файла" + postIdFromFile)
+        # print("Найден новый пост!\n")
+
+        urlToPost = "https://vk.com/wall" + postId[0]
+        html = requests.get(url)
+        soup = BeautifulSoup(html.content, 'html.parser')
+        r = requests.get(url)
+        temp = r.content.decode()
+
+        headPattern = re.compile(">([\w\s%$#&;+.,]+)<br\/>")
+        head = []
+        head = re.findall(headPattern, temp)
+
+        print(str(head[0]).replace("&#8381;", "₽").replace("&#33;", ""))
+        print("Полная версия: " + urlToPost)
 
 @dp.message_handler(commands=['bibometr'])
 async def start_command(message: types.Message):
@@ -68,6 +125,7 @@ async def ping(m):
             f.close()
             m.reply('Добавлены в список')
 
+
 @dp.message_handler(commands=['weather'])
 async def getWeather(message: types.Message):
     try:
@@ -89,6 +147,7 @@ async def getWeather(message: types.Message):
         await message.answer(resultMessage)
     except Exception as e:
         await bot.send_message(chat_id=message.chat.id, text='Неверные данные, попробуйте еще раз')
+
 
 @dp.message_handler(content_types=['text'])
 async def text(message: types.Message):
@@ -188,6 +247,7 @@ async def text(message: types.Message):
         except Exception as e:
             await bot.send_message(chat_id=message.chat.id, text='Неверные данные, попробуйте еще раз')
 
+
 @dp.message_handler(commands=['set'])
 async def set_default_commands(dp):
     await dp.bot.set_my_commands([
@@ -198,5 +258,6 @@ async def set_default_commands(dp):
 
 
 if __name__ == "__main__":
-    # Запускаем бота
+    loop = asyncio.get_event_loop()
+    loop.create_task(checkPosts(10))  # поставим 10 секунд, в качестве теста
     executor.start_polling(dp, skip_updates=True)
