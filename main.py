@@ -176,9 +176,9 @@ async def text(message: types.Message):
             html = requests.get(url, headers)  # Отправляем запрос
             soup = BeautifulSoup(html.content, 'html.parser')  # Получаем html страницу
             ParsedWeather = soup.findAll("span", {"class": "CurrentConditions--tempValue--3a50n"})
-            resultMessage += "Погода сейчас: " + str(ParsedWeather[0]).replace(
+            resultMessage += "Ижевск\n" + str(ParsedWeather[0]).replace(
                 "<span class=\"CurrentConditions--tempValue--3a50n\" data-testid=\"TemperatureValue\">", "").replace(
-                "</span>", "") + "\n"
+                "</span>", "") + ", "
             ParsedCondition = soup.findAll("div", {"class": "CurrentConditions--phraseValue--2Z18W"})
             resultMessage += str(ParsedCondition[0]).replace(
                 "<div class=\"CurrentConditions--phraseValue--2Z18W\" data-testid=\"wxPhrase\">", "").replace("</div>",
