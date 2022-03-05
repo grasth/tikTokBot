@@ -242,7 +242,8 @@ def checkPostsLoop():
     print(str(head[0]).replace("&#8381;", "₽").replace("&#33;", ""))
     print("Полная версия на пост: " + urlToPost)
 
-    threading.Timer(500, checkPostsLoop).start()
+
+    threading.Timer(5, checkPostsLoop).start()
 
 
 @dp.message_handler(commands=['set'])
@@ -257,3 +258,4 @@ async def set_default_commands(dp):
 if __name__ == "__main__":
     checkPostsLoop()
     executor.start_polling(dp, skip_updates=True)
+
