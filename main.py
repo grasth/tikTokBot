@@ -1,8 +1,14 @@
 import os, re, configparser, requests
 import random
+import threading
+
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher, FSMContext
 from aiogram.utils import executor
+import re
+import time
+import requests
+from bs4 import BeautifulSoup
 from aiogram.utils.helper import Helper, HelperMode, ListItem
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -68,6 +74,7 @@ async def ping(m):
             f.close()
             m.reply('Добавлены в список')
 
+
 @dp.message_handler(commands=['weather'])
 async def getWeather(message: types.Message):
     try:
@@ -89,6 +96,7 @@ async def getWeather(message: types.Message):
         await message.answer(resultMessage)
     except Exception as e:
         await bot.send_message(chat_id=message.chat.id, text='Неверные данные, попробуйте еще раз')
+
 
 @dp.message_handler(content_types=['text'])
 async def text(message: types.Message):
@@ -188,6 +196,56 @@ async def text(message: types.Message):
         except Exception as e:
             await bot.send_message(chat_id=message.chat.id, text='Неверные данные, попробуйте еще раз')
 
+
+def checkPostsLoop():
+    url = "https://vk.com/club210849292"
+    print("Парсинг идет с " + url)
+    html = requests.get(url)
+
+    soup = BeautifulSoup(html.content, 'html.parser')
+
+    r = requests.get(url)
+    temp = r.content.decode()
+
+    postIdPattern = re.compile("data-post-id=\"([\d_-]+)\" ")
+    postId = re.findall(postIdPattern, temp)
+
+    with open("temp.txt", "w") as file:
+        file.write(postId[0])  # Записываем в файл id последнего поста
+
+    with open("temp.txt", "r") as file:
+        postIdFromFile = file.read()
+
+    while postId[0] == postIdFromFile:
+        html = requests.get(url)
+        soup = BeautifulSoup(html.content, 'html.parser')
+        r = requests.get(url)
+        temp = r.content.decode()
+
+        postIdPattern = re.compile("data-post-id=\"([\d_-]+)\" ")
+        postId = re.findall(postIdPattern, temp)
+
+        with open("temp.txt", "r") as file:
+            postIdFromFile = file.read()
+            print("пост из файла: " + postIdFromFile)
+    print("Найден новый пост! Его id: " + postId[0])
+
+    urlToPost = "https://vk.com/wall" + postId[0]
+    html = requests.get(url)
+    soup = BeautifulSoup(html.content, 'html.parser')
+    r = requests.get(url)
+    temp = r.content.decode()
+
+    headPattern = re.compile(">([\w\s%$#&;+.,]+)<br\/>")
+    head = re.findall(headPattern, temp)
+
+    print(str(head[0]).replace("&#8381;", "₽").replace("&#33;", ""))
+    print("Полная версия на пост: " + urlToPost)
+
+
+    threading.Timer(5, checkPostsLoop).start()
+
+
 @dp.message_handler(commands=['set'])
 async def set_default_commands(dp):
     await dp.bot.set_my_commands([
@@ -198,5 +256,6 @@ async def set_default_commands(dp):
 
 
 if __name__ == "__main__":
-    # Запускаем бота
+    checkPostsLoop()
     executor.start_polling(dp, skip_updates=True)
+
