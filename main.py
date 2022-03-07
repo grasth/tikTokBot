@@ -68,6 +68,7 @@ async def ping(m):
             f.close()
             m.reply('Добавлены в список')
 
+
 @dp.message_handler(commands=['weather'])
 async def getWeather(message: types.Message):
     try:
@@ -89,6 +90,29 @@ async def getWeather(message: types.Message):
         await message.answer(resultMessage)
     except Exception as e:
         await bot.send_message(chat_id=message.chat.id, text='Неверные данные, попробуйте еще раз')
+
+
+@dp.message_handler(commands=['roll'])
+async def roll(message: types.Message):
+    try:
+        benAnswer = random.choice([True, False])
+        if benAnswer:
+            with open(f'./videos/yes.mp4', 'rb') as file:
+                await bot.send_video(
+                    chat_id=message.chat.id,
+                    video=file,
+                    reply_to_message_id=message.message_id
+                )
+        else:
+            with open(f'./videos/no.mp4', 'rb') as file:
+                await bot.send_video(
+                    chat_id=message.chat.id,
+                    video=file,
+                    reply_to_message_id=message.message_id
+                )
+    except Exception as e:
+        await bot.send_message(chat_id=message.chat.id, text='Неверные данные, попробуйте еще раз')
+
 
 @dp.message_handler(content_types=['text'])
 async def text(message: types.Message):
@@ -188,12 +212,14 @@ async def text(message: types.Message):
         except Exception as e:
             await bot.send_message(chat_id=message.chat.id, text='Неверные данные, попробуйте еще раз')
 
+
 @dp.message_handler(commands=['set'])
 async def set_default_commands(dp):
     await dp.bot.set_my_commands([
         types.BotCommand("all", "Пингануть всех"),
         types.BotCommand("bibometr", "Узнать размер агрегата"),
-        types.BotCommand("weather", "Узнать погоду")
+        types.BotCommand("weather", "Узнать погоду"),
+        types.BotCommand("roll", "Да или нет")
     ])
 
 
