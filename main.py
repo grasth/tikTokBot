@@ -95,21 +95,14 @@ async def getWeather(message: types.Message):
 @dp.message_handler(commands=['roll'])
 async def roll(message: types.Message):
     try:
-        benAnswer = random.choice([True, False])
-        if benAnswer:
-            with open(f'./videos/yes.mp4', 'rb') as file:
-                await bot.send_video(
-                    chat_id=message.chat.id,
-                    video=file,
-                    reply_to_message_id=message.message_id
-                )
-        else:
-            with open(f'./videos/no.mp4', 'rb') as file:
-                await bot.send_video(
-                    chat_id=message.chat.id,
-                    video=file,
-                    reply_to_message_id=message.message_id
-                )
+        trueOrFalse = random.choice([True, False])
+        with open(f'./videos/{str(trueOrFalse)}.mp4', 'rb') as file:
+            await bot.send_video(
+                chat_id=message.chat.id,
+                video=file,
+                reply_to_message_id=message.message_id
+            )
+
     except Exception as e:
         await bot.send_message(chat_id=message.chat.id, text='Неверные данные, попробуйте еще раз')
 
