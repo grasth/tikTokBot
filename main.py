@@ -141,23 +141,26 @@ async def text(message: types.Message):
             resultMessage = ""
             headers = {
                 'user agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
-                              "Chrome/98.0.4758.102 Safari/537.36"}  # Headers для запроса
+                              "Chrome/98.0.4758.102 Safari/537.35"}  # Headers для запроса
 
             user = message.text.replace('$', '')
             ticker = user.upper()  # Перевод в верхний регистр для удобства
             if ticker == "BTC":
-                fullUrl = "https://ru.investing.com/crypto/bitcoin/btc-usd"
+                fullUrl = "https://www.rbc.ru/crypto/currency/btcusd"
                 html = requests.get(fullUrl, headers)  # Отправляем запрос
                 soup = BeautifulSoup(html.content, 'html.parser').decode()  # Получаем html страницу
                 pricePattern = re.compile(
-                    "<span class=\"text-2xl\" data-test=\"instrument-price-last\">([\w\d.,]+)</span>")
+                    "<div class=\"chart__subtitle js-chart-value\">([\n \d,]+)<span class=\"chart__change chart__change_grow\">")
                 price = re.findall(pricePattern, soup)
-                resultMessage += "Цена за штуку: " + str(price[0]).replace("['", "").replace(",", ".").replace("']",
-                                                                                                               "") + " USD\n"
+                PercentPattern = re.compile("chart__change chart__change_grow\">([\n +\d,-.]+)([(\d,%]+)\)")
+                percent = re.findall(PercentPattern, soup)
+                PercentPattern2 = re.compile("\(([\d,%]+)'")
+                SymbolPattern = re.compile("([+-]+)")
+                symbol = re.findall(SymbolPattern, str(percent))
+                percent2 = re.findall(PercentPattern2, str(percent))
+                resultMessage += "Цена за штуку: " + str(price[0]).replace(" ", "").replace("\n", "") + " USD\n"
+                resultMessage += "Движение цены за день: " + str(symbol[0]) + str(percent2[0]).replace("['", "").replace("']", "")
 
-                # if positiveProfitPattern == true:
-                #     resultMessage += "Движение цены за день: " + "+" + positiveProfitPattern
-                # else: resultMessage += "Движение цены за день: " + "-" + negativeProfitPattern
             elif ticker == "USD":
                 fullUrl = "https://bcs-express.ru/kotirovki-i-grafiki/usd000utstom"  # Ссылка на запрос
                 html = requests.get(fullUrl, headers)  # Отправляем запрос
