@@ -150,11 +150,11 @@ async def text(message: types.Message):
                 html = requests.get(fullUrl, headers)  # Отправляем запрос
                 soup = BeautifulSoup(html.content, 'html.parser').decode()  # Получаем html страницу
                 pricePattern = re.compile(
-                    "<div class=\"chart__subtitle js-chart-value\">([\n \d,]+)<span class=\"chart__change chart__change_grow\">")
+                    "<div class=\"chart__subtitle js-chart-value\">([\n \d,]+)<span class=\"chart__change chart__change")
                 price = re.findall(pricePattern, soup)
-                PercentPattern = re.compile("chart__change chart__change_grow\">([\n +\d,-.]+)([(\d,%]+)\)")
+                PercentPattern = re.compile("<span class=\"chart__change chart__change_(grow|fall)\">([\n +\d,-.]+)([(\-\d,+%]+)\)")
                 percent = re.findall(PercentPattern, soup)
-                PercentPattern2 = re.compile("\(([\d,%]+)'")
+                PercentPattern2 = re.compile("\(-([\d,%]+)'\)")
                 SymbolPattern = re.compile("([+-]+)")
                 symbol = re.findall(SymbolPattern, str(percent))
                 percent2 = re.findall(PercentPattern2, str(percent))
