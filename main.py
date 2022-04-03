@@ -1,19 +1,18 @@
-import os, re, configparser, requests
+import os
 import random
-from aiogram import Bot, types
-from aiogram.dispatcher import Dispatcher, FSMContext
-from aiogram.utils import executor
-from aiogram.utils.helper import Helper, HelperMode, ListItem
-from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.types import ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, \
-    InlineKeyboardButton
-import urllib.request
-from tiktok_downloader import snaptik
+import re
 import sys
-import urllib
+from time import sleep
+from PIL import Image
+from selenium import webdriver
+from selenium.webdriver.common.by import By
 import requests
+from aiogram import Bot, types
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.dispatcher import Dispatcher
+from aiogram.utils import executor
 from bs4 import BeautifulSoup
+from tiktok_downloader import snaptik
 
 bot = Bot(token=sys.argv[1])
 dp = Dispatcher(bot, storage=MemoryStorage())
@@ -137,6 +136,9 @@ async def text(message: types.Message):
                 await bot.send_message(chat_id=message.chat.id, text=str(e.args))
                 # await bot.send_message(chat_id=message.chat.id, text='Ошибка при скачивании, неверная ссылка, видео было удалено или я его не нашел.')
     elif message.text[0] == '$':
+        DRIVER = 'chromedriver'
+        filename = 'screenshot.png'
+        driver = webdriver.Chrome(DRIVER)
         try:
             resultMessage = ""
             headers = {
@@ -202,6 +204,43 @@ async def text(message: types.Message):
                 resultMessage += "Цена за штуку: " + price + "\n"
                 resultMessage += "Движение цены за день: " + str(
                     profit.replace("['", "").replace(",", ".").replace("']", "")) + "\n"
+
+                driver.get("https://www.tinkoff.ru/invest/stocks/" + ticker)
+                driver.maximize_window()  # For maximizing window
+                driver.implicitly_wait(5)
+
+                element = driver.find_element(by=By.CLASS_NAME, value="InvestChart__iconButton_lbuMT")
+                driver.implicitly_wait(1)
+                element.click()
+                driver.implicitly_wait(1)
+
+                element = driver.find_element(by=By.CLASS_NAME, value="TabsBlock-module__content_jZmZt")
+                driver.implicitly_wait(1)
+                element.click()
+                driver.implicitly_wait(1)
+
+                graph = driver.find_element(by=By.CLASS_NAME, value="Chart__chart_afVZ2")
+                location = graph.location
+                size = graph.size
+                driver.save_screenshot(filename)
+                _image = Image.open(filename)
+                left = location['x']
+                top = location['y']
+                right = location['x'] + size['width']
+                bottom = location['y'] + size['height']
+                sleep(1)
+                image = _image.crop((left, top, right, bottom))
+                image.save(filename)
+                sleep(1)
+                driver.quit()
+
+                with open(f'./screenshot.png', 'rb') as file:
+                    await bot.send_photo(
+                        chat_id=message.chat.id,
+                        photo=file,
+                        reply_to_message_id=message.message_id
+                    )
+
             else:
                 resultMessage += "Неверные данные, попробуйте еще раз" + "\n"
             await bot.send_message(chat_id=message.chat.id, text=resultMessage)
