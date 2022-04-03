@@ -152,14 +152,7 @@ async def text(message: types.Message):
                 pricePattern = re.compile(
                     "<div class=\"chart__subtitle js-chart-value\">([\n \d,]+)<span class=\"chart__change chart__change")
                 price = re.findall(pricePattern, soup)
-                PercentPattern = re.compile("<span class=\"chart__change chart__change_(grow|fall)\">([\n +\d,-.]+)([(\-\d,+%]+)\)")
-                percent = re.findall(PercentPattern, soup)
-                PercentPattern2 = re.compile("\(-([\d,%]+)'\)")
-                SymbolPattern = re.compile("([+-]+)")
-                symbol = re.findall(SymbolPattern, str(percent))
-                percent2 = re.findall(PercentPattern2, str(percent))
                 resultMessage += "Цена за штуку: " + str(price[0]).replace(" ", "").replace("\n", "") + " USD\n"
-                resultMessage += "Движение цены за день: " + str(symbol[0]) + str(percent2[0]).replace("['", "").replace("']", "")
 
             elif ticker == "USD":
                 fullUrl = "https://bcs-express.ru/kotirovki-i-grafiki/usd000utstom"  # Ссылка на запрос
