@@ -117,26 +117,8 @@ async def text(message: types.Message):
                       "AppleWebKit/537.36 (KHTML, like Gecko) "
                       "Chrome/91.0.4472.135 Safari/537.36"
     }
-    if len(link) > 0:
-        print("[" + message.from_user.username + "] получена ссылка: " + link[0])
-        if 'tiktok' in str(link[0]).lower():
-            video_url = message.text
-
-            try:
-                snaptik(video_url).get_media()[0].download(f"./videos/result_{message.from_user.id}.mp4")
-                path = f'./videos/result_{message.from_user.id}.mp4'
-                with open(f'./videos/result_{message.from_user.id}.mp4', 'rb') as file:
-                    await bot.send_video(
-                        chat_id=message.chat.id,
-                        video=file,
-                        reply_to_message_id=message.message_id
-                    )
-                os.remove(path)
-            except Exception as e:
-                await bot.send_message(chat_id=message.chat.id, text=str(type(e)))
-                await bot.send_message(chat_id=message.chat.id, text=str(e.args))
-                # await bot.send_message(chat_id=message.chat.id, text='Ошибка при скачивании, неверная ссылка, видео было удалено или я его не нашел.')
-    elif message.text[0] == '$':
+    
+    if message.text[0] == '$':
         try:
             resultMessage = ""
             headers = {
